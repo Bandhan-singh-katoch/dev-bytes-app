@@ -14,7 +14,7 @@ import com.example.android.devbyteviewer.util.smartTruncate
 /**
  * Videos represent a devbyte that can be played.
  */
-data class Video(val title: String,
+data class DevByteVideo(val title: String,
                  val description: String,
                  val url: String,
                  val updated: String,
