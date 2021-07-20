@@ -12,3 +12,15 @@ data class DatabaseVideo constructor(
     val description : String,
     val thumbnail : String
 )
+
+fun List<DatabaseVideo>.asDomainModel():List<DevByteVideo>{
+    return map {
+        DevByteVideo(
+            url = it.url,
+            updated = it.updated,
+            title = it.title,
+            description = it.description,
+            thumbnail = it.thumbnail
+        )
+    }
+}
