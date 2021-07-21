@@ -37,7 +37,7 @@ data class NetworkVideo(
 /**
  * Convert Network results to database objects
  */
-fun NetworkVideoContainer.asDomainModel(): List<DatabaseVideo> {
+fun NetworkVideoContainer.asDatabaseModel(): List<DatabaseVideo> {
     return videos.map {
         DatabaseVideo(
                 title = it.title,
