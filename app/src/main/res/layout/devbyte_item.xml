@@ -8,7 +8,7 @@
 
         <variable
             name="video"
-            type="com.example.android.devbyteviewer.domain.Video" />
+            type="com.example.android.devbyteviewer.domain.DevByteVideo" />
 
         <variable
             name="videoCallback"

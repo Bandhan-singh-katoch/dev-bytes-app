@@ -1,23 +1,24 @@
 package com.example.android.devbyteviewer.ui
 
+//import androidx.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.annotation.LayoutRes
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
-//import androidx.lifecycle.ViewModelProviders
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.android.devbyteviewer.R
 import com.example.android.devbyteviewer.databinding.DevbyteItemBinding
 import com.example.android.devbyteviewer.databinding.FragmentDevByteBinding
-import com.example.android.devbyteviewer.domain.Video
+import com.example.android.devbyteviewer.domain.DevByteVideo
 import com.example.android.devbyteviewer.viewmodels.DevByteViewModel
 
 /**
@@ -27,17 +28,15 @@ class DevByteFragment : Fragment() {
 
     /**
      * One way to delay creation of the viewModel until an appropriate lifecycle method is to use
-     * lazy. This requires that viewModel not be referenced before onViewCreated(), which we
+     * lazy. This requires that viewModel not be referenced before onActivityCreated, which we
      * do in this Fragment.
      */
     private val viewModel: DevByteViewModel by lazy {
         val activity = requireNotNull(this.activity) {
-            "You can only access the viewModel after onViewCreated()"
+            "You can only access the viewModel after onActivityCreated()"
         }
-        //The ViewModelProviders (plural) is deprecated.  
-        //ViewModelProviders.of(this, DevByteViewModel.Factory(activity.application)).get(DevByteViewModel::class.java)
-        ViewModelProvider(this, DevByteViewModel.Factory(activity.application)).get(DevByteViewModel::class.java)
-                
+        ViewModelProvider(this, DevByteViewModel.Factory(activity.application))
+            .get(DevByteViewModel::class.java)
     }
 
     /**
@@ -47,13 +46,13 @@ class DevByteFragment : Fragment() {
 
     /**
      * Called immediately after onCreateView() has returned, and fragment's
-     * view hierarchy has been created.  It can be used to do final
+     * view hierarchy has been created. It can be used to do final
      * initialization once these pieces are in place, such as retrieving
      * views or restoring state.
      */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.playlist.observe(viewLifecycleOwner, Observer<List<Video>> { videos ->
+        viewModel.playlist.observe(viewLifecycleOwner, Observer<List<DevByteVideo>> { videos ->
             videos?.apply {
                 viewModelAdapter?.videos = videos
             }
@@ -79,10 +78,10 @@ class DevByteFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         val binding: FragmentDevByteBinding = DataBindingUtil.inflate(
-                inflater,
-                R.layout.fragment_dev_byte,
-                container,
-                false)
+            inflater,
+            R.layout.fragment_dev_byte,
+            container,
+            false)
         // Set the lifecycleOwner so DataBinding can observe LiveData
         binding.setLifecycleOwner(viewLifecycleOwner)
 
@@ -110,13 +109,29 @@ class DevByteFragment : Fragment() {
             adapter = viewModelAdapter
         }
 
+
+        // Observer for the network error.
+        viewModel.eventNetworkError.observe(viewLifecycleOwner, Observer<Boolean> { isNetworkError ->
+            if (isNetworkError) onNetworkError()
+        })
+
         return binding.root
+    }
+
+    /**
+     * Method for displaying a Toast error message for network errors.
+     */
+    private fun onNetworkError() {
+        if(!viewModel.isNetworkErrorShown.value!!) {
+            Toast.makeText(activity, "Network Error", Toast.LENGTH_LONG).show()
+            viewModel.onNetworkErrorShown()
+        }
     }
 
     /**
      * Helper method to generate YouTube app links
      */
-    private val Video.launchUri: Uri
+    private val DevByteVideo.launchUri: Uri
         get() {
             val httpUri = Uri.parse(url)
             return Uri.parse("vnd.youtube:" + httpUri.getQueryParameter("v"))
@@ -127,13 +142,13 @@ class DevByteFragment : Fragment() {
  * Click listener for Videos. By giving the block a name it helps a reader understand what it does.
  *
  */
-class VideoClick(val block: (Video) -> Unit) {
+class VideoClick(val block: (DevByteVideo) -> Unit) {
     /**
      * Called when a video is clicked
      *
      * @param video the video that was clicked
      */
-    fun onClick(video: Video) = block(video)
+    fun onClick(video: DevByteVideo) = block(video)
 }
 
 /**
@@ -144,7 +159,7 @@ class DevByteAdapter(val callback: VideoClick) : RecyclerView.Adapter<DevByteVie
     /**
      * The videos that our Adapter will show
      */
-    var videos: List<Video> = emptyList()
+    var videos: List<DevByteVideo> = emptyList()
         set(value) {
             field = value
             // For an extra challenge, update this to use the paging library.
@@ -160,10 +175,10 @@ class DevByteAdapter(val callback: VideoClick) : RecyclerView.Adapter<DevByteVie
      */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DevByteViewHolder {
         val withDataBinding: DevbyteItemBinding = DataBindingUtil.inflate(
-                LayoutInflater.from(parent.context),
-                DevByteViewHolder.LAYOUT,
-                parent,
-                false)
+            LayoutInflater.from(parent.context),
+            DevByteViewHolder.LAYOUT,
+            parent,
+            false)
         return DevByteViewHolder(withDataBinding)
     }
 
@@ -187,7 +202,7 @@ class DevByteAdapter(val callback: VideoClick) : RecyclerView.Adapter<DevByteVie
  * ViewHolder for DevByte items. All work is done by data binding.
  */
 class DevByteViewHolder(val viewDataBinding: DevbyteItemBinding) :
-        RecyclerView.ViewHolder(viewDataBinding.root) {
+    RecyclerView.ViewHolder(viewDataBinding.root) {
     companion object {
         @LayoutRes
         val LAYOUT = R.layout.devbyte_item
